@@ -24,9 +24,3 @@ services:
         sync: false
       - key: MONTHLY_PRICE_USD
         value: "18"
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_PRICE_ID
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false

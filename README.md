@@ -115,12 +115,6 @@ Set `APP_BASE_URL` to the final Render URL, for example:
 https://reframe-demo.onrender.com
 ```
 
-Optional Stripe variables can stay blank for a demo:
-
-- `STRIPE_SECRET_KEY`
-- `STRIPE_PRICE_ID`
-- `STRIPE_WEBHOOK_SECRET`
-
 Render settings if you create the service manually instead of using Blueprint:
 
 ```bash
