@@ -15,3 +15,8 @@ add column if not exists ai_translation jsonb;
 
 create index if not exists timestamped_notes_share_timestamp_idx
 on public.timestamped_notes (share_id, timestamp_seconds, created_at);
+
+-- Notes and AI translations are stored via the Express API with the Supabase
+-- secret key. Do not expose direct table access to browser roles.
+alter table public.timestamped_notes enable row level security;
+revoke all on table public.timestamped_notes from anon, authenticated;

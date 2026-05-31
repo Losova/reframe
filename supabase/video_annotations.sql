@@ -15,3 +15,8 @@ create table if not exists public.video_annotations (
 
 create index if not exists video_annotations_share_bucket_idx
 on public.video_annotations (share_id, timestamp_bucket, created_at);
+
+-- Annotations are stored via the Express API with the Supabase secret key.
+-- Do not expose direct table access to browser roles.
+alter table public.video_annotations enable row level security;
+revoke all on table public.video_annotations from anon, authenticated;

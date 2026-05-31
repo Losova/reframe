@@ -56,6 +56,65 @@ function ReadinessItem({ isReady, label }) {
   );
 }
 
+function FlowStep({ label, number, text }) {
+  return (
+    <div className="flex min-w-0 cursor-default select-none items-center gap-2 text-left">
+      <span className="mono text-[0.62rem] text-stone-600">{number}</span>
+      <span className="h-px w-5 shrink-0 bg-stone-700" />
+      <span className="text-[0.65rem] uppercase tracking-[0.18em] text-stone-300">
+        {label}
+      </span>
+      <span className="sr-only">{text}</span>
+    </div>
+  );
+}
+
+function TooltipBadge({ children, tooltip }) {
+  return (
+    <div className="group relative">
+      <div
+        className="cursor-help rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-amber-100"
+        tabIndex={0}
+      >
+        {children}
+      </div>
+      <div className="pointer-events-none absolute right-0 top-[calc(100%+0.65rem)] z-10 hidden w-64 rounded-2xl border border-stone-700 bg-stone-950/95 p-3 text-xs normal-case leading-5 tracking-normal text-stone-300 shadow-2xl group-hover:block group-focus-within:block">
+        {tooltip}
+      </div>
+    </div>
+  );
+}
+
+function getCreateLinkHint({
+  configError,
+  configLoading,
+  projectTitle,
+  selectedFile,
+  uploading
+}) {
+  if (uploading) {
+    return 'Uploading your review clip now.';
+  }
+
+  if (configLoading) {
+    return 'Loading project configuration.';
+  }
+
+  if (!selectedFile) {
+    return 'Upload an MP4 to continue.';
+  }
+
+  if (!projectTitle.trim()) {
+    return 'Add a project title to continue.';
+  }
+
+  if (configError) {
+    return 'Configuration error. Check your Supabase setup.';
+  }
+
+  return 'Ready to create the client review link.';
+}
+
 export default function HomePage({ config, configLoading, configError }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [projectTitle, setProjectTitle] = useState('');
@@ -76,6 +135,18 @@ export default function HomePage({ config, configLoading, configError }) {
   const [exporting, setExporting] = useState(false);
 
   const isDisabled = uploading || configLoading;
+  const createShareLinkDisabled =
+    isDisabled ||
+    !selectedFile ||
+    !projectTitle.trim() ||
+    Boolean(configError);
+  const createShareLinkHint = getCreateLinkHint({
+    configError,
+    configLoading,
+    projectTitle,
+    selectedFile,
+    uploading
+  });
   const previewTitle = projectTitle.trim() || 'Snowfall color pass review';
   const previewBrand = brandName.trim() || workspaceName.trim() || 'Reframe Studio';
   const previewClient = clientName.trim() || 'Client review guest';
@@ -244,30 +315,29 @@ export default function HomePage({ config, configLoading, configError }) {
             </p>
           </div>
 
-          <div className="flex flex-col items-end gap-1.5">
-            <p className="text-[0.6rem] uppercase tracking-[0.2em] text-stone-500">Upload Flow</p>
-            <div className="grid grid-cols-3 gap-2 text-center text-[0.65rem] uppercase tracking-[0.2em] text-stone-400">
-              <div
-                className="flex cursor-default select-none flex-col items-center gap-1 rounded-xl border border-stone-700/70 bg-black/25 px-3 py-2.5"
-                title="Step 1: Upload your MP4 file"
-              >
-                <span className="text-[0.5rem] text-stone-600">01</span>
-                <span>MP4</span>
-              </div>
-              <div
-                className="flex cursor-default select-none flex-col items-center gap-1 rounded-xl border border-stone-700/70 bg-black/25 px-3 py-2.5"
-                title="Step 2: Your owner workspace with full controls"
-              >
-                <span className="text-[0.5rem] text-stone-600">02</span>
-                <span>Owner</span>
-              </div>
-              <div
-                className="flex cursor-default select-none flex-col items-center gap-1 rounded-xl border border-stone-700/70 bg-black/25 px-3 py-2.5"
-                title="Step 3: Client receives a clean, focused review link"
-              >
-                <span className="text-[0.5rem] text-stone-600">03</span>
-                <span>Client</span>
-              </div>
+          <div
+            aria-label="Upload flow: MP4 upload, owner workspace, client review link"
+            className="w-full max-w-sm rounded-[1.1rem] bg-black/15 px-4 py-3 lg:w-auto"
+          >
+            <p className="mb-3 text-[0.6rem] uppercase tracking-[0.22em] text-stone-500">
+              Upload Flow
+            </p>
+            <div className="grid gap-2">
+              <FlowStep
+                label="MP4"
+                number="01"
+                text="Upload your MP4 file"
+              />
+              <FlowStep
+                label="Owner"
+                number="02"
+                text="Open the animator workspace with full controls"
+              />
+              <FlowStep
+                label="Client"
+                number="03"
+                text="Send the client a focused review link"
+              />
             </div>
           </div>
         </div>
@@ -342,12 +412,9 @@ export default function HomePage({ config, configLoading, configError }) {
                     portal instead of a loose file link.
                   </p>
                 </div>
-                <div
-                  className="rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-amber-100"
-                  title="Studio Plan features: branded portals, PDF report export, client approval flow, and Stripe billing"
-                >
+                <TooltipBadge tooltip="Studio Plan unlocks branded portals, PDF report export, client approval flow, and Stripe billing.">
                   SaaS
-                </div>
+                </TooltipBadge>
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -492,7 +559,7 @@ export default function HomePage({ config, configLoading, configError }) {
               <p className="label">Publish</p>
               <div className="mt-4 space-y-4 text-sm leading-7 text-slate-300">
                 <p>1. Upload the MP4 through the Express API.</p>
-                <p>2. Store playback in the `reframe-videos` bucket.</p>
+                <p>2. Store playback in the Supabase video bucket.</p>
                 <p>3. Generate separate owner and client links.</p>
               </div>
 
@@ -514,31 +581,23 @@ export default function HomePage({ config, configLoading, configError }) {
                 </div>
               ) : null}
 
-              <span
-                className="mt-6 block"
-                title={
-                  !selectedFile
-                    ? 'Select an MP4 file first'
-                    : !projectTitle.trim()
-                      ? 'Add a project title to continue'
-                      : configError
-                        ? 'Configuration error — check your Supabase setup'
-                        : undefined
-                }
-              >
+              <span className="group relative mt-6 block">
                 <button
                   className="inline-flex w-full items-center justify-center rounded-full bg-stone-100 px-5 py-3 text-sm font-semibold text-stone-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:bg-stone-500"
-                  disabled={
-                    isDisabled ||
-                    !selectedFile ||
-                    !projectTitle.trim() ||
-                    Boolean(configError)
-                  }
+                  disabled={createShareLinkDisabled}
                   type="submit"
                 >
                   {uploading ? 'Uploading to Supabase…' : 'Create Share Link'}
                 </button>
+                {createShareLinkDisabled ? (
+                  <span className="pointer-events-none absolute left-1/2 top-[calc(100%+0.75rem)] z-10 hidden w-max max-w-[min(22rem,90vw)] -translate-x-1/2 rounded-2xl border border-stone-700 bg-stone-950/95 px-4 py-2 text-xs text-stone-200 shadow-2xl group-hover:block">
+                    {createShareLinkHint}
+                  </span>
+                ) : null}
               </span>
+              <p className="mt-3 text-xs leading-5 text-stone-400">
+                {createShareLinkHint}
+              </p>
 
               <div className="mt-6 rounded-[1.35rem] border border-stone-700/70 bg-stone-950/70 p-5">
               <div className="flex items-start justify-between gap-4">
