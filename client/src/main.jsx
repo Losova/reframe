@@ -5,6 +5,12 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import './index.css';
 
+const bootFallback = document.getElementById('boot-fallback');
+
+if (bootFallback) {
+  bootFallback.remove();
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
@@ -12,4 +18,3 @@ createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </StrictMode>
 );
-
