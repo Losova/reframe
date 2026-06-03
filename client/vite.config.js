@@ -8,45 +8,7 @@ export default defineConfig({
     modulePreload: false,
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('vite/preload-helper')) {
-            return 'runtime';
-          }
-
-          if (!id.includes('node_modules')) {
-            return undefined;
-          }
-
-          if (id.includes('react-router')) {
-            return 'router';
-          }
-
-          if (
-            id.includes('/react/') ||
-            id.includes('/react-dom/') ||
-            id.includes('/scheduler/')
-          ) {
-            return 'react-vendor';
-          }
-
-          if (id.includes('@supabase')) {
-            return 'supabase';
-          }
-
-          if (id.includes('/fabric/')) {
-            return 'fabric';
-          }
-
-          if (id.includes('/jspdf/')) {
-            return 'pdf';
-          }
-
-          if (id.includes('html2canvas') || id.includes('dompurify')) {
-            return 'pdf';
-          }
-
-          return 'vendor';
-        }
+        inlineDynamicImports: true
       }
     }
   },
