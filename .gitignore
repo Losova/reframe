@@ -3,6 +3,7 @@ client/node_modules
 server/node_modules
 client/dist
 release
+submission/
 .DS_Store
 client/.DS_Store
 server/.DS_Store
