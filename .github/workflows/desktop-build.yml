@@ -10,6 +10,14 @@ jobs:
   build:
     name: Build ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
+    env:
+      APP_BASE_URL: http://127.0.0.1:3001
+      CSC_IDENTITY_AUTO_DISCOVERY: false
+      MONTHLY_PRICE_USD: 18
+      OPENAI_API_KEY: test-openai-key
+      SUPABASE_PUBLISHABLE_KEY: test-publishable-key
+      SUPABASE_SECRET_KEY: test-secret-key
+      SUPABASE_URL: https://example.supabase.co
     strategy:
       fail-fast: false
       matrix:
