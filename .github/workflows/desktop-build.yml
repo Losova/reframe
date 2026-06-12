@@ -24,13 +24,13 @@ jobs:
         include:
           - os: macos-latest
             platform: mac
-            command: npm run dist:mac
+            command: npm run dist -- --mac --dir
           - os: windows-latest
             platform: windows
-            command: npm run dist:win
+            command: npm run dist -- --win --dir
           - os: ubuntu-latest
             platform: linux
-            command: npm run dist:linux
+            command: npm run dist -- --linux --dir
 
     steps:
       - name: Checkout
@@ -51,7 +51,7 @@ jobs:
       - name: Build desktop app
         run: ${{ matrix.command }}
 
-      - name: Upload installer artifacts
+      - name: Upload desktop artifacts
         uses: actions/upload-artifact@v4
         with:
           name: reframe-${{ matrix.platform }}

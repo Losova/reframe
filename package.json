@@ -1,6 +1,8 @@
 {
   "name": "reframe",
   "version": "1.0.0",
+  "description": "Desktop client review app for animation feedback.",
+  "author": "Abiola Batiste",
   "private": true,
   "main": "desktop/main.cjs",
   "engines": {
