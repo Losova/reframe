@@ -1,0 +1,50 @@
+name: Desktop builds
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            command: npm run dist:mac
+          - os: windows-latest
+            platform: windows
+            command: npm run dist:win
+          - os: ubuntu-latest
+            platform: linux
+            command: npm run dist:linux
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Run tests
+        run: npm run test -w server
+
+      - name: Build desktop app
+        run: ${{ matrix.command }}
+
+      - name: Upload installer artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: reframe-${{ matrix.platform }}
+          path: release/**

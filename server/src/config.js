@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 dotenv.config({
-  path: path.resolve(__dirname, '../../.env')
+  path: process.env.REFRAME_ENV_FILE ?? path.resolve(__dirname, '../../.env')
 });
 
 const requiredEnvVars = [
@@ -22,6 +22,7 @@ if (missingEnvVars.length > 0) {
 }
 
 export const config = {
+  host: process.env.HOST ?? null,
   port: Number(process.env.PORT ?? 3001),
   supabaseUrl: process.env.SUPABASE_URL,
   supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY,
@@ -34,6 +35,9 @@ export const config = {
   monthlyPriceUsd: Number(process.env.MONTHLY_PRICE_USD ?? 18),
   annotationBucketMs: 250,
   bucketName: 'translate-videos',
-  uploadDirectory: path.resolve(__dirname, '../uploads'),
-  clientDistDirectory: path.resolve(__dirname, '../../client/dist')
+  uploadDirectory:
+    process.env.REFRAME_UPLOAD_DIR ?? path.resolve(__dirname, '../uploads'),
+  clientDistDirectory:
+    process.env.REFRAME_CLIENT_DIST_DIR ??
+    path.resolve(__dirname, '../../client/dist')
 };

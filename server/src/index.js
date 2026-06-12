@@ -23,8 +23,24 @@ export async function startServer() {
     });
   }
 
-  app.listen(config.port, () => {
-    console.log(`Reframe server running on http://localhost:${config.port}`);
+  return new Promise((resolve, reject) => {
+    const server = config.host
+      ? app.listen(config.port, config.host)
+      : app.listen(config.port);
+
+    server.once('error', reject);
+    server.once('listening', () => {
+      const address = server.address();
+      const host =
+        typeof address === 'object' && address?.address
+          ? address.address
+          : config.host || 'localhost';
+      const port =
+        typeof address === 'object' && address?.port ? address.port : config.port;
+
+      console.log(`Reframe server running on http://${host}:${port}`);
+      resolve(server);
+    });
   });
 }
 

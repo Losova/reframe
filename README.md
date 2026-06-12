@@ -92,6 +92,35 @@ Build the client:
 npm run build
 ```
 
+## Desktop App Builds
+
+Reframe can also run as an Electron desktop app. The desktop app starts the
+local Express server, opens the React review UI in a native window, and stores
+temporary upload files in the app data folder.
+
+Run the desktop app locally:
+
+```bash
+npm run desktop
+```
+
+Build installers on your machine:
+
+```bash
+npm run dist:mac
+npm run dist:win
+npm run dist:linux
+```
+
+The packaged desktop app creates its own `.env` file the first time it opens.
+Fill in that file with your Supabase and OpenAI keys, then reopen Reframe.
+Do not hard-code production secret keys into the app source or commit a real
+`.env` file to GitHub.
+
+GitHub Actions will also build desktop artifacts whenever `main` is pushed. The
+workflow is in `.github/workflows/desktop-build.yml`, and completed installers
+appear under the workflow run's artifacts.
+
 ## Render Demo Deployment
 
 This repo includes `render.yaml` for deploying the whole app as one Render Web

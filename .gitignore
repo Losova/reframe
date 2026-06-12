@@ -2,6 +2,10 @@ node_modules
 client/node_modules
 server/node_modules
 client/dist
+release
+.DS_Store
+client/.DS_Store
+server/.DS_Store
 .env
 server/uploads/*
 !server/uploads/.gitkeep
