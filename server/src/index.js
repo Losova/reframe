@@ -9,6 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 
 export async function startServer() {
   await mkdir(config.uploadDirectory, { recursive: true });
+  await mkdir(config.localDataDirectory, { recursive: true });
 
   const app = createApp();
   const builtIndexPath = path.join(config.clientDistDirectory, 'index.html');

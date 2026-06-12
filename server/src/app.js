@@ -7,12 +7,17 @@ import helmet from 'helmet';
 import multer from 'multer';
 import { rateLimit } from 'express-rate-limit';
 import { config } from './config.js';
-import { isValidAiTranslation, translateNoteWithOpenAI } from './openai.js';
+import {
+  isValidAiTranslation,
+  translateNoteOffline,
+  translateNoteWithOpenAI
+} from './openai.js';
 import {
   constructStripeWebhookEvent,
   createSubscriptionCheckoutSession,
   isStripeConfigured
 } from './stripe.js';
+import * as localStoreServices from './localStore.js';
 import {
   createProject,
   createTimestampedNote,
@@ -46,7 +51,7 @@ const PROJECT_STATUSES = new Set([
   'final_delivered'
 ]);
 
-const defaultServices = {
+const supabaseServices = {
   createProject,
   createTimestampedNote,
   createVideoAnnotation,
@@ -61,6 +66,12 @@ const defaultServices = {
   updateTimestampedNoteTranslation,
   uploadVideoToStorage
 };
+
+function getDefaultServices(runtimeConfig) {
+  return runtimeConfig.storageMode === 'local'
+    ? localStoreServices
+    : supabaseServices;
+}
 
 export function buildShareUrl(request, shareId) {
   const forwardedProtocol = request.get('x-forwarded-proto');
@@ -78,11 +89,28 @@ export function buildOwnerUrl(request, shareId, ownerToken) {
   return `${protocol}://${host}/o/${shareId}/${ownerToken}`;
 }
 
-export function buildPlaybackUrl(playbackPath, runtimeConfig = config) {
+function buildBaseUrl(request, runtimeConfig = config) {
+  if (!request) {
+    return runtimeConfig.appBaseUrl.replace(/\/$/, '');
+  }
+
+  const forwardedProtocol = request.get('x-forwarded-proto');
+  const forwardedHost = request.get('x-forwarded-host');
+  const protocol = forwardedProtocol ?? request.protocol;
+  const host = forwardedHost ?? request.get('host');
+
+  return `${protocol}://${host}`;
+}
+
+export function buildPlaybackUrl(playbackPath, runtimeConfig = config, request = null) {
   const encodedPlaybackPath = String(playbackPath)
     .split('/')
     .map((segment) => encodeURIComponent(segment))
     .join('/');
+
+  if (runtimeConfig.storageMode === 'local') {
+    return `${buildBaseUrl(request, runtimeConfig)}/media/${encodedPlaybackPath}`;
+  }
 
   return `${runtimeConfig.supabaseUrl.replace(/\/$/, '')}/storage/v1/object/public/${encodeURIComponent(
     runtimeConfig.bucketName
@@ -94,7 +122,7 @@ export function buildProjectResponse(project, request, runtimeConfig = config) {
 
   return {
     ...safeProject,
-    playbackUrl: buildPlaybackUrl(project.playbackPath, runtimeConfig),
+    playbackUrl: buildPlaybackUrl(project.playbackPath, runtimeConfig, request),
     shareUrl: buildShareUrl(request, project.shareId)
   };
 }
@@ -204,7 +232,7 @@ export function createApp({
   services: providedServices = {}
 } = {}) {
   const services = {
-    ...defaultServices,
+    ...getDefaultServices(runtimeConfig),
     ...providedServices
   };
 
@@ -269,6 +297,9 @@ export function createApp({
   );
 
   app.use(express.json({ limit: '64kb' }));
+  if (runtimeConfig.storageMode === 'local') {
+    app.use('/media', express.static(runtimeConfig.localDataDirectory));
+  }
 
   const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -334,7 +365,10 @@ export function createApp({
       appName: 'Reframe',
       billingConfigured: isStripeConfigured(runtimeConfig),
       monthlyPriceUsd: runtimeConfig.monthlyPriceUsd,
-      openAiConfigured: Boolean(runtimeConfig.openaiApiKey)
+      openAiConfigured: Boolean(
+        runtimeConfig.openaiApiKey || runtimeConfig.aiFallbackEnabled
+      ),
+      storageMode: runtimeConfig.storageMode
     });
   });
 
@@ -726,17 +760,19 @@ export function createApp({
         return response.status(400).json({ message: 'Note is too long to translate.' });
       }
 
-      if (!runtimeConfig.openaiApiKey) {
+      if (!runtimeConfig.openaiApiKey && !runtimeConfig.aiFallbackEnabled) {
         return response
           .status(503)
           .json({ message: 'AI translation is not configured.' });
       }
 
       try {
-        const aiTranslation = await translateNoteWithOpenAI({
-          apiKey: runtimeConfig.openaiApiKey,
-          noteText
-        });
+        const aiTranslation = runtimeConfig.openaiApiKey
+          ? await translateNoteWithOpenAI({
+              apiKey: runtimeConfig.openaiApiKey,
+              noteText
+            })
+          : translateNoteOffline({ noteText });
         const note = await services.updateTimestampedNoteTranslation({
           aiTranslation,
           noteId: request.params.noteId,

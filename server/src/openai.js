@@ -32,6 +32,47 @@ export function isValidAiTranslation(value) {
   );
 }
 
+function normalizeNotePreview(noteText) {
+  return noteText.replace(/\s+/g, ' ').trim().slice(0, 140);
+}
+
+function inferTone(noteText) {
+  const text = noteText.toLowerCase();
+
+  if (/\b(fast|faster|quick|quicker|snappy|speed|pace|slow|slower)\b/.test(text)) {
+    return 'faster';
+  }
+
+  if (/\b(bright|dark|color|warm|cold|blue|orange|light)\b/.test(text)) {
+    return 'warmer';
+  }
+
+  if (/\b(big|bold|strong|impact|pop|dramatic)\b/.test(text)) {
+    return 'bolder';
+  }
+
+  if (/\b(smooth|soft|subtle|gentle|calm)\b/.test(text)) {
+    return 'smoother';
+  }
+
+  return 'clearer';
+}
+
+export function translateNoteOffline({ noteText }) {
+  const notePreview = normalizeNotePreview(noteText);
+  const tone = inferTone(notePreview);
+
+  return {
+    actions: [
+      'Identify the exact shot element the note refers to before revising.',
+      'Make one focused pass that addresses the note without changing unrelated animation.',
+      'Compare the updated frame against the previous version to confirm the intent reads clearly.'
+    ],
+    summary: `Turn the feedback "${notePreview}" into a focused revision pass with a ${tone} creative direction.`,
+    tone
+  };
+}
+
 export async function translateNoteWithOpenAI({ apiKey, noteText }) {
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',

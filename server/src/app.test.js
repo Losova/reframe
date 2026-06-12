@@ -13,6 +13,11 @@ const runtimeConfig = {
   supabaseUrl: 'https://example.supabase.co'
 };
 
+const localRuntimeConfig = {
+  appBaseUrl: 'http://127.0.0.1:37817',
+  storageMode: 'local'
+};
+
 test('buildProjectResponse adds a share URL without mutating core project fields', () => {
   const request = {
     get(header) {
@@ -73,6 +78,13 @@ test('buildPlaybackUrl creates a public storage URL for the playback asset', () 
   assert.equal(
     buildPlaybackUrl('videos/review clip.mp4', runtimeConfig),
     'https://example.supabase.co/storage/v1/object/public/translate-videos/videos/review%20clip.mp4'
+  );
+});
+
+test('buildPlaybackUrl creates a local media URL in desktop mode', () => {
+  assert.equal(
+    buildPlaybackUrl('videos/review clip.mp4', localRuntimeConfig),
+    'http://127.0.0.1:37817/media/videos/review%20clip.mp4'
   );
 });
 

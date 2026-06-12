@@ -8,26 +8,32 @@ dotenv.config({
   path: process.env.REFRAME_ENV_FILE ?? path.resolve(__dirname, '../../.env')
 });
 
-const requiredEnvVars = [
-  'SUPABASE_URL',
-  'SUPABASE_PUBLISHABLE_KEY',
-  'SUPABASE_SECRET_KEY'
-];
+const hasSupabaseConfig = Boolean(
+  process.env.SUPABASE_URL &&
+    process.env.SUPABASE_PUBLISHABLE_KEY &&
+    process.env.SUPABASE_SECRET_KEY
+);
 
-const missingEnvVars = requiredEnvVars.filter((name) => !process.env[name]);
-if (missingEnvVars.length > 0) {
-  throw new Error(
-    `Missing required environment variables: ${missingEnvVars.join(', ')}`
-  );
-}
+const requestedStorageMode = process.env.STORAGE_MODE?.toLowerCase();
+const storageMode =
+  requestedStorageMode === 'supabase'
+    ? 'supabase'
+    : requestedStorageMode === 'local'
+      ? 'local'
+      : hasSupabaseConfig
+        ? 'supabase'
+        : 'local';
 
 export const config = {
   host: process.env.HOST ?? null,
   port: Number(process.env.PORT ?? 3001),
-  supabaseUrl: process.env.SUPABASE_URL,
-  supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY,
-  supabaseSecretKey: process.env.SUPABASE_SECRET_KEY,
+  storageMode,
+  hasSupabaseConfig,
+  supabaseUrl: process.env.SUPABASE_URL ?? null,
+  supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY ?? null,
+  supabaseSecretKey: process.env.SUPABASE_SECRET_KEY ?? null,
   openaiApiKey: process.env.OPENAI_API_KEY ?? null,
+  aiFallbackEnabled: process.env.AI_FALLBACK_ENABLED !== 'false',
   appBaseUrl: process.env.APP_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3001}`,
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? null,
   stripePriceId: process.env.STRIPE_PRICE_ID ?? null,
@@ -37,6 +43,8 @@ export const config = {
   bucketName: 'translate-videos',
   uploadDirectory:
     process.env.REFRAME_UPLOAD_DIR ?? path.resolve(__dirname, '../uploads'),
+  localDataDirectory:
+    process.env.REFRAME_DATA_DIR ?? path.resolve(__dirname, '../data'),
   clientDistDirectory:
     process.env.REFRAME_CLIENT_DIST_DIR ??
     path.resolve(__dirname, '../../client/dist')

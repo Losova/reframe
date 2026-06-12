@@ -6,17 +6,18 @@ Reframe is a React + Express review app for animation teams. Animators can uploa
 
 - React + Vite in `client/`
 - Express in `server/`
-- Supabase Storage for MP4 hosting
-- Supabase Postgres for project, note, and annotation records
+- Local desktop storage for zero-config downloads
+- Optional Supabase Storage/Postgres for hosted cloud mode
 - Fabric.js for the annotation overlay
 - Tailwind CSS for the dark review UI
 - OpenAI GPT-4o for AI note translation
 - Stripe Checkout for the `$18/month` Studio subscription
 - jsPDF for client-side report export
 
-## Environment
+## Environment For Hosted Mode
 
-Copy `.env.example` to `.env` and fill in:
+The desktop download does not require environment variables. For the hosted
+web app or production cloud mode, copy `.env.example` to `.env` and fill in:
 
 - `SUPABASE_URL`
 - `SUPABASE_PUBLISHABLE_KEY`
@@ -35,7 +36,7 @@ that Price ID. The app uses Stripe Checkout Sessions in subscription mode.
 
 The client no longer needs the Supabase browser SDK for playback. The server resolves and returns the public video URL directly.
 
-## Database Setup
+## Database Setup For Hosted Mode
 
 Run these SQL files in the Supabase SQL editor:
 
@@ -96,7 +97,10 @@ npm run build
 
 Reframe can also run as an Electron desktop app. The desktop app starts the
 local Express server, opens the React review UI in a native window, and stores
-temporary upload files in the app data folder.
+videos, projects, notes, annotations, and reports in the user's app data folder.
+No Supabase URL, Supabase key, or OpenAI key is required for the downloadable
+demo. If no OpenAI key is present, Reframe uses a local creative-direction
+fallback for the Translate button.
 
 Run the desktop app locally:
 
@@ -112,14 +116,16 @@ npm run dist:win
 npm run dist:linux
 ```
 
-The packaged desktop app creates its own `.env` file the first time it opens.
-Fill in that file with your Supabase and OpenAI keys, then reopen Reframe.
-Do not hard-code production secret keys into the app source or commit a real
-`.env` file to GitHub.
+The packaged desktop app creates an optional `.env` file the first time it
+opens, but it defaults to `STORAGE_MODE=local` and `AI_FALLBACK_ENABLED=true`.
+Only edit that file if you want to connect a personal cloud Supabase/OpenAI
+setup later. Do not hard-code production secret keys into the app source or
+commit a real `.env` file to GitHub.
 
 GitHub Actions will also build desktop artifacts whenever `main` is pushed. The
-workflow is in `.github/workflows/desktop-build.yml`, and completed installers
-appear under the workflow run's artifacts.
+workflow is in `.github/workflows/desktop-build.yml`, and completed desktop
+downloads appear under the workflow run's artifacts. For Windows, download
+`reframe-windows`, extract it, and run `Reframe.exe`.
 
 ## Render Demo Deployment
 

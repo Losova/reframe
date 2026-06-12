@@ -34,16 +34,14 @@ const PROJECT_SELECT_COLUMNS = [
   'created_at'
 ].join(', ');
 
-export const adminSupabase = createClient(
-  config.supabaseUrl,
-  config.supabaseSecretKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
+export const adminSupabase = config.hasSupabaseConfig
+  ? createClient(config.supabaseUrl, config.supabaseSecretKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  : null;
 
 let bucketReadyPromise;
 
@@ -51,6 +49,14 @@ function createServiceSetupError(message) {
   const error = new Error(message);
   error.statusCode = 503;
   return error;
+}
+
+function requireSupabaseConfiguration() {
+  if (!adminSupabase) {
+    throw createServiceSetupError(
+      'Supabase is not configured. Reframe is running in local desktop mode.'
+    );
+  }
 }
 
 function formatProjectSchemaError(action, error) {
@@ -191,6 +197,8 @@ export async function createProject({
   versionLabel = 'Version 1',
   workspaceId = null
 }) {
+  requireSupabaseConfiguration();
+
   const projectCoreFields = {
     owner_token: ownerToken,
     original_filename: originalFilename,
@@ -251,6 +259,8 @@ async function getProjectByShareIdInternal(
   shareId,
   { includeOwnerToken = false } = {}
 ) {
+  requireSupabaseConfiguration();
+
   const { data, error } = await adminSupabase
     .from(PROJECTS_TABLE)
     .select(PROJECT_SELECT_COLUMNS)
@@ -287,6 +297,8 @@ async function getProjectByShareIdInternal(
 }
 
 export async function ensureBucket() {
+  requireSupabaseConfiguration();
+
   if (!bucketReadyPromise) {
     bucketReadyPromise = (async () => {
       const { data: buckets, error } = await adminSupabase.storage.listBuckets();
@@ -387,6 +399,8 @@ export async function getStoredVideo(shareId) {
 }
 
 export async function listVideoAnnotations(shareId) {
+  requireSupabaseConfiguration();
+
   const { data, error } = await adminSupabase
     .from(ANNOTATIONS_TABLE)
     .select(
@@ -412,6 +426,8 @@ export async function createVideoAnnotation({
   canvasHeight,
   payload
 }) {
+  requireSupabaseConfiguration();
+
   const timestampBucket = Math.round(timestampMs / config.annotationBucketMs);
   const { data, error } = await adminSupabase
     .from(ANNOTATIONS_TABLE)
@@ -438,6 +454,8 @@ export async function createVideoAnnotation({
 }
 
 export async function deleteVideoAnnotation({ annotationId, shareId }) {
+  requireSupabaseConfiguration();
+
   const { data, error } = await adminSupabase
     .from(ANNOTATIONS_TABLE)
     .delete()
@@ -454,6 +472,8 @@ export async function deleteVideoAnnotation({ annotationId, shareId }) {
 }
 
 export async function updateProjectStatus({ shareId, status }) {
+  requireSupabaseConfiguration();
+
   const { data, error } = await adminSupabase
     .from(PROJECTS_TABLE)
     .update({ status })
@@ -499,6 +519,8 @@ export async function updateProjectStatus({ shareId, status }) {
 }
 
 export async function listTimestampedNotes(shareId) {
+  requireSupabaseConfiguration();
+
   const { data, error } = await adminSupabase
     .from(TIMESTAMPED_NOTES_TABLE)
     .select(
@@ -521,6 +543,8 @@ export async function createTimestampedNote({
   shareId,
   timestampSeconds
 }) {
+  requireSupabaseConfiguration();
+
   const { data, error } = await adminSupabase
     .from(TIMESTAMPED_NOTES_TABLE)
     .insert({
@@ -546,6 +570,8 @@ export async function updateTimestampedNoteTranslation({
   noteId,
   shareId
 }) {
+  requireSupabaseConfiguration();
+
   const { data, error } = await adminSupabase
     .from(TIMESTAMPED_NOTES_TABLE)
     .update({

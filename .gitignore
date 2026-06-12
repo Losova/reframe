@@ -10,3 +10,4 @@ server/.DS_Store
 .env
 server/uploads/*
 !server/uploads/.gitkeep
+server/data

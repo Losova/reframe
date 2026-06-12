@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isValidAiTranslation } from './openai.js';
+import { isValidAiTranslation, translateNoteOffline } from './openai.js';
 
 test('isValidAiTranslation accepts the stored note translation shape', () => {
   assert.equal(
@@ -22,4 +22,13 @@ test('isValidAiTranslation rejects incomplete translation payloads', () => {
     }),
     false
   );
+});
+
+test('translateNoteOffline returns a valid local creative direction', () => {
+  const translation = translateNoteOffline({
+    noteText: 'Can this feel a little faster and more dramatic?'
+  });
+
+  assert.equal(isValidAiTranslation(translation), true);
+  assert.equal(translation.tone, 'faster');
 });

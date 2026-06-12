@@ -6,10 +6,14 @@ const DESKTOP_PORT = 37817;
 
 function getEnvTemplate() {
   return [
-    'SUPABASE_URL=https://your-project-id.supabase.co',
-    'SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key',
-    'SUPABASE_SECRET_KEY=your-supabase-service-role-key',
-    'OPENAI_API_KEY=your-openai-api-key',
+    '# Reframe runs locally by default. No Supabase or OpenAI keys are required.',
+    'STORAGE_MODE=local',
+    'AI_FALLBACK_ENABLED=true',
+    '# Optional cloud mode:',
+    '# SUPABASE_URL=https://your-project-id.supabase.co',
+    '# SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key',
+    '# SUPABASE_SECRET_KEY=your-supabase-service-role-key',
+    '# OPENAI_API_KEY=your-openai-api-key',
     `APP_BASE_URL=http://127.0.0.1:${DESKTOP_PORT}`,
     'MONTHLY_PRICE_USD=18',
     ''
@@ -19,11 +23,13 @@ function getEnvTemplate() {
 function prepareDesktopEnvironment() {
   const userDataPath = app.getPath('userData');
   const envPath = path.join(userDataPath, '.env');
-  const uploadsPath = path.join(userDataPath, 'uploads');
+  const uploadsPath = path.join(userDataPath, 'temporary-uploads');
+  const dataPath = path.join(userDataPath, 'local-data');
   const appPath = app.getAppPath();
 
   fs.mkdirSync(userDataPath, { recursive: true });
   fs.mkdirSync(uploadsPath, { recursive: true });
+  fs.mkdirSync(dataPath, { recursive: true });
 
   if (!fs.existsSync(envPath)) {
     fs.writeFileSync(envPath, getEnvTemplate(), 'utf8');
@@ -31,9 +37,12 @@ function prepareDesktopEnvironment() {
 
   process.env.HOST = '127.0.0.1';
   process.env.PORT = String(DESKTOP_PORT);
+  process.env.STORAGE_MODE = process.env.STORAGE_MODE || 'local';
+  process.env.AI_FALLBACK_ENABLED = process.env.AI_FALLBACK_ENABLED || 'true';
   process.env.APP_BASE_URL = `http://127.0.0.1:${DESKTOP_PORT}`;
   process.env.REFRAME_CLIENT_DIST_DIR = path.join(appPath, 'client/dist');
   process.env.REFRAME_ENV_FILE = envPath;
+  process.env.REFRAME_DATA_DIR = dataPath;
   process.env.REFRAME_UPLOAD_DIR = uploadsPath;
 
   return {
@@ -78,7 +87,7 @@ async function startDesktopApp() {
       buttons: ['Open .env file', 'Quit'],
       defaultId: 0,
       detail:
-        `${error.message}\n\nThe desktop app stores its environment file here:\n${envPath}\n\nFill in your Supabase and OpenAI keys, then reopen Reframe.`,
+        `${error.message}\n\nReframe runs locally by default and does not require Supabase or OpenAI keys. Its optional environment file is here:\n${envPath}`,
       message: 'Reframe could not start',
       type: 'error'
     });
